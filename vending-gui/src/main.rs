@@ -42,7 +42,7 @@ impl eframe::App for AppState {
                 selection_button(self, ui, "D");
                 ui.end_row();
             });
-            ui.label(format!("Selected: {}{}", self.current_selection.letter, self.current_selection.number));
+            ui.add(egui::Label::new(format!("Selected: {}{}", self.current_selection.letter, self.current_selection.number)));
         });
     }
 }
