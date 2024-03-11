@@ -40,6 +40,7 @@ fn listen_for_letters(state: &mut AppState, ctx: &egui::Context) {
     if ctx.input(|i| i.key_pressed(Key::D)) {
         state.current_selection.letter = 'D';
     }
+    state.current_selection.number = 0;
 }
 
 fn listen_for_numbers(state: &mut AppState, ctx: &egui::Context) {
