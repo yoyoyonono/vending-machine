@@ -76,7 +76,7 @@ impl Default for AppState {
         Self {
             current_selection: Selection {
                 letter: 'A',
-                number: 1,
+                number: 0,
             },            
         }
     }
