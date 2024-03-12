@@ -17,24 +17,6 @@ fn main() -> Result<(), eframe::Error> {
     ))
 }
 
-struct App {
-    state: Arc<Mutex<State>>,
-}
-
-impl App {
-    pub fn new (cc: &eframe::CreationContext) -> Self {
-        let state = Arc::new(Mutex::new(State::default()));
-        state.lock().unwrap().ctx = Some(cc.egui_ctx.clone());
-        let state_clone = state.clone();
-        std::thread::spawn(move || {
-            handle_states(state_clone)
-        });
-        Self {
-            state,
-        }
-    }
-}
-
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -72,14 +54,6 @@ fn handle_states(state: Arc<Mutex<State>>) {
             },
             _ => (),
         }
-    }
-}
-
-fn request_repaint(state: Arc<Mutex<State>>) {
-    let ctx = &state.lock().unwrap().ctx;
-    match ctx {
-        Some (x) => x.request_repaint(),
-        None => (),
     }
 }
 
@@ -157,6 +131,15 @@ fn listen_for_numbers(app: &mut App, ctx: &egui::Context) {
     }
 }
 
+fn request_repaint(state: Arc<Mutex<State>>) {
+    let ctx = &state.lock().unwrap().ctx;
+    match ctx {
+        Some (x) => x.request_repaint(),
+        None => (),
+    }
+}
+
+
 struct Selection {
     letter: char,
     number: i32,
@@ -190,6 +173,24 @@ impl State {
             },
             processing_state: ProcessingState::Idle,
             ctx: None,
+        }
+    }
+}
+
+struct App {
+    state: Arc<Mutex<State>>,
+}
+
+impl App {
+    pub fn new (cc: &eframe::CreationContext) -> Self {
+        let state = Arc::new(Mutex::new(State::default()));
+        state.lock().unwrap().ctx = Some(cc.egui_ctx.clone());
+        let state_clone = state.clone();
+        std::thread::spawn(move || {
+            handle_states(state_clone)
+        });
+        Self {
+            state,
         }
     }
 }
