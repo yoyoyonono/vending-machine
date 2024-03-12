@@ -1,17 +1,24 @@
 use eframe::egui;
-use egui::Key;
+use egui::{Key, Style, Visuals};
 use std::sync::{Arc, Mutex};
+use fast_qr::convert::{svg::SvgBuilder, Builder, Shape};
+use fast_qr::qr::QRBuilder;
 
 fn main() -> Result<(), eframe::Error> {
     env_logger::init();
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_inner_size([1280.0, 720.0]),
+        viewport: egui::ViewportBuilder::default().with_inner_size([240.0, 400.0]),
         ..Default::default()
     };
 
     eframe::run_native("Vending Machine", options, 
         Box::new(|cc| {
             egui_extras::install_image_loaders(&cc.egui_ctx);
+            let style = Style {
+                visuals: Visuals::light(),
+                ..Style::default()
+            };
+            cc.egui_ctx.set_style(style);
             Box::new(App::new(&cc))
         }
     ))
@@ -30,7 +37,12 @@ impl eframe::App for App {
                     listen_for_numbers(self, ctx);
                 },
                 ProcessingState::GetPayment => {
-                    self.state.lock().unwrap().processing_state = ProcessingState::Dispensing;
+                    ui.heading("Please scan the QR code to pay");
+                    if !self.state.lock().unwrap().qr_code_finished {
+                        ui.heading("Processing...");
+                    } else {
+                        ui.image(egui::include_image!("../qr.svg"));
+                    }
                 },
                 ProcessingState::Dispensing => {
                     display_dispensing(self, ui);
@@ -52,6 +64,27 @@ fn handle_states(state: Arc<Mutex<State>>) {
                 state.lock().unwrap().current_selection.number = 0;
                 request_repaint(state.clone());
             },
+            ProcessingState::GetPayment => {
+
+                // generate qr code here
+
+                let qrcode = QRBuilder::new("https://www.google.com")
+                    .build()
+                    .unwrap();
+                let _image = SvgBuilder::default()
+                    .shape(Shape::Square)
+                    .to_file(&qrcode, "qr.svg");
+                state.lock().unwrap().qr_code_finished = true;
+                request_repaint(state.clone());
+
+                // wait for payment
+
+                std::thread::sleep(std::time::Duration::from_secs(5));
+
+                
+                state.lock().unwrap().processing_state = ProcessingState::Dispensing;
+                state.lock().unwrap().qr_code_finished = false;
+            }
             _ => (),
         }
     }
@@ -149,6 +182,7 @@ struct State {
     current_selection: Selection,
     processing_state: ProcessingState,
     ctx: Option<egui::Context>,
+    qr_code_finished: bool,
 }
 
 #[derive(PartialEq, Clone, Copy)]
@@ -172,6 +206,7 @@ impl State {
                 number: 0,
             },
             processing_state: ProcessingState::Idle,
+            qr_code_finished: false,
             ctx: None,
         }
     }
