@@ -7,7 +7,10 @@ use fast_qr::qr::QRBuilder;
 fn main() -> Result<(), eframe::Error> {
     env_logger::init();
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_inner_size([240.0, 400.0]),
+        viewport: egui::ViewportBuilder::default()
+        .with_inner_size([240.0, 400.0])
+        .with_always_on_top()
+        .with_active(true),
         ..Default::default()
     };
 
