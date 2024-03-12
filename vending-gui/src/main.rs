@@ -39,7 +39,7 @@ impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Select Item");
-            display_selection(self, ctx, ui);
+            display_selection(self, ui);
             let current_processing_state = self.state.lock().unwrap().processing_state.clone();
             match current_processing_state {
                 ProcessingState::Idle => {
@@ -89,7 +89,7 @@ fn display_dispensing(app: &mut App, ui: &mut egui::Ui) {
         state.current_selection.letter, state.current_selection.number), );
 }
 
-fn display_selection(app: &mut App, ctx: &egui::Context, ui: &mut egui::Ui) {
+fn display_selection(app: &mut App, ui: &mut egui::Ui) {
     let state = app.state.lock().unwrap();
     ui.heading(format!("Selected item : {}{}", 
         if state.current_selection.letter == 'Z' { ' ' } else { state.current_selection.letter }, 
