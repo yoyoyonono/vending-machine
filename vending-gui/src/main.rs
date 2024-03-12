@@ -31,10 +31,10 @@ impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Select Item");
-            display_selection(self, ui);
             let current_processing_state = self.state.lock().unwrap().processing_state.clone();
             match current_processing_state {
                 ProcessingState::Idle => {
+                    display_selection(self, ui);
                     listen_for_enter(self, ctx);
                     listen_for_letters(self, ctx);
                     listen_for_numbers(self, ctx);
