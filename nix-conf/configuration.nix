@@ -2,12 +2,13 @@
 # your system. Help is available in the configuration.nix(5) man page, on
 # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, inputs, ... }:
 
 {
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
+      inputs.home-manager.nixosModules.default
     ];
 
   # Use the extlinux boot loader. (NixOS wants to enable GRUB by default)
@@ -64,6 +65,14 @@
     packages = with pkgs; [
       tree
     ];
+  };
+
+  home-manager = {
+    
+    extraSpecialArgs = {inherit inputs; };
+    users = {
+      "nixos" = import ./home.nix;
+    }; 
   };
 
   # List packages installed in system profile. To search, run:
