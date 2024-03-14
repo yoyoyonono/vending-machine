@@ -8,7 +8,8 @@ fn main() -> Result<(), eframe::Error> {
     env_logger::init();
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-        .with_inner_size([240.0, 400.0])
+        .with_inner_size([480.0, 800.0])
+        .with_maximized(true)
         .with_always_on_top()
         .with_active(true),
         ..Default::default()
@@ -30,6 +31,7 @@ fn main() -> Result<(), eframe::Error> {
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
+            ctx.set_zoom_factor(2.0);
             ui.heading("Select Item");
             let current_processing_state = self.state.lock().unwrap().processing_state.clone();
             match current_processing_state {
