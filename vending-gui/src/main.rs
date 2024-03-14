@@ -31,7 +31,7 @@ fn main() -> Result<(), eframe::Error> {
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            ctx.set_zoom_factor(2.0);
+            ctx.set_zoom_factor(2.75);
             ui.heading("Select Item");
             let current_processing_state = self.state.lock().unwrap().processing_state.clone();
             match current_processing_state {
