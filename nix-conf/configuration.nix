@@ -26,6 +26,14 @@
   # Set your time zone.
   time.timeZone = "Asia/Kathmandu";
 
+  hardware = {
+    raspbery-pi."4".apply-overlays-dtmerge.enable = true;
+    deviceTree = {
+      enable = true;
+      filter = "*rpi-4-*.dtb";
+    };
+  };
+
   # Configure network proxy if necessary
   # networking.proxy.default = "http://user:password@proxy:port/";
   # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
@@ -101,6 +109,8 @@
     wget
     git
     gh
+    libraspberrypi
+    raspberrypi-eeprom
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
