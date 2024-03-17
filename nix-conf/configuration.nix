@@ -38,15 +38,22 @@
   #   useXkbConfig = true; # use xkb.options in tty.
   # };
 
+  hardware = {
+    raspberry-pi."4".apply-overlays-dtmerge.enable = true;
+    raspberry-pi."4".fkms-3d.enable = true;
+  };
+  console.enable = false;
+
   # Enable the X11 windowing system.
   services.xserver = {
     enable = true;
     desktopManager = {
-      xterm.enable = false;
-      xfce.enable = true;
+      gnome.enable = true;
     };
     displayManager = {
-      defaultSession = "xfce";
+      lightdm = {
+        enable = true;
+      };
       autoLogin = {
         enable = true;
         user = "nixos";
@@ -101,6 +108,7 @@
     wget
     git
     gh
+    libraspberrypi
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
