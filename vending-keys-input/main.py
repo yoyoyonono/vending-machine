@@ -20,8 +20,10 @@ keypad = factory.create_keypad(keypad=KEYPAD, row_pins=ROW_PINS, col_pins=COL_PI
 def printKey(key: str):
     if key == '*' or key == '#':
         keyboard.press(Key.enter)
+        keyboard.release(Key.enter)
     else:
         keyboard.press(key.lower())
+        keyboard.release(key.lower())
 
 keypad.registerKeyPressHandler(printKey)
 
