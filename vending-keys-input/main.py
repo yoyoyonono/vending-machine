@@ -1,13 +1,14 @@
 from pad4pi import rpi_gpio
 from pynput.keyboard import Key, Controller
+from time import sleep
 
 keyboard = Controller()
 
 KEYPAD = [
-    ["1", "2", "3", "A"],
-    ["4", "5", "6", "B"],
-    ["7", "8", "9", "C"],
-    ["*", "0", "#", "D"]
+    ["1", "2", "3", "a"],
+    ["4", "5", "6", "b"],
+    ["7", "8", "9", "c"],
+    ["*", "0", "#", "d"]
 ]
 
 ROW_PINS = [4, 14, 15, 17] # BCM numbering
@@ -20,9 +21,11 @@ keypad = factory.create_keypad(keypad=KEYPAD, row_pins=ROW_PINS, col_pins=COL_PI
 def printKey(key: str):
     if key == '*' or key == '#':
         keyboard.press(Key.enter)
+        sleep(0.1)
         keyboard.release(Key.enter)
     else:
         keyboard.press(key.lower())
+        sleep(0.1)
         keyboard.release(key.lower())
 
 keypad.registerKeyPressHandler(printKey)
