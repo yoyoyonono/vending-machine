@@ -1,3 +1,5 @@
 target/
 .direnv/
 qr.svg
+qr.png
+prices.txt

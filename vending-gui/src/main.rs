@@ -1,11 +1,25 @@
 use eframe::egui;
 use egui::{Key, Style, Visuals};
+use std::process::Command;
 use std::sync::{Arc, Mutex};
 use fast_qr::convert::{svg::SvgBuilder, Builder, Shape};
 use fast_qr::qr::QRBuilder;
 
 fn main() -> Result<(), eframe::Error> {
     env_logger::init();
+
+    let prices_file = std::fs::read_to_string("prices.txt").unwrap();
+
+    let mut prices = std::collections::HashMap::new();
+    
+    for price_line in prices_file.lines() {
+        let mut split = price_line.split(" ");
+        let letter = split.next().unwrap().chars().next().unwrap();
+        let number = split.next().unwrap().parse::<i32>().unwrap();
+        let price = split.next().unwrap().parse::<i32>().unwrap();
+        prices.insert(Selection{letter, number}, price);
+    }
+
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
         .with_inner_size([480.0, 800.0])
@@ -23,7 +37,7 @@ fn main() -> Result<(), eframe::Error> {
                 ..Style::default()
             };
             cc.egui_ctx.set_style(style);
-            Box::new(App::new(&cc))
+            Box::new(App::new(&cc, prices))
         }
     ))
 }
@@ -46,7 +60,7 @@ impl eframe::App for App {
                     if !self.state.lock().unwrap().qr_code_finished {
                         ui.heading("Processing...");
                     } else {
-                        ui.image(egui::include_image!("../qr.svg"));
+                        ui.add(egui::Image::new("file://./qr.png"));
                     }
                 },
                 ProcessingState::Dispensing => {
@@ -73,12 +87,31 @@ fn handle_states(state: Arc<Mutex<State>>) {
 
                 // generate qr code here
 
-                let qrcode = QRBuilder::new("https://www.google.com")
+                state.lock().unwrap().qr_code_finished = false;
+
+                let prices = state.lock().unwrap().prices.clone();
+                let current_selection = state.lock().unwrap().current_selection.clone();
+
+                let qrcode = QRBuilder::new(format!("https://google.com/{}", prices.get(&current_selection).unwrap()))
                     .build()
                     .unwrap();
                 let _image = SvgBuilder::default()
                     .shape(Shape::Square)
                     .to_file(&qrcode, "qr.svg");
+
+                let _ = Command::new("convert")
+                    .arg("-size")
+                    .arg("200x200")
+                    .arg("qr.svg")
+                    .arg("qr.png")
+                    .output()
+                    .expect("failed to execute process");
+
+//                println!("{:?}", convert_output);
+
+                state.clone().lock().unwrap().ctx.clone().unwrap().forget_all_images();
+
+                std::thread::sleep(std::time::Duration::from_millis(500));
                 state.lock().unwrap().qr_code_finished = true;
                 request_repaint(state.clone());
 
@@ -106,6 +139,9 @@ fn display_selection(app: &mut App, ui: &mut egui::Ui) {
     ui.heading(format!("Selected item : {}{}", 
         if state.current_selection.letter == 'Z' { ' ' } else { state.current_selection.letter }, 
         if state.current_selection.number == 0 { ' ' } else { char::from_digit(state.current_selection.number.try_into().unwrap(), 10).unwrap() }));
+    if state.current_selection.letter != 'Z' && state.current_selection.number != 0 {
+        ui.heading(format!("Price : {}", state.prices.get(&state.current_selection).unwrap()));
+    }
 }
 
 fn listen_for_enter(app: &mut App, ctx: &egui::Context) {
@@ -177,7 +213,7 @@ fn request_repaint(state: Arc<Mutex<State>>) {
     }
 }
 
-
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
 struct Selection {
     letter: char,
     number: i32,
@@ -188,6 +224,7 @@ struct State {
     processing_state: ProcessingState,
     ctx: Option<egui::Context>,
     qr_code_finished: bool,
+    prices: std::collections::HashMap<Selection, i32>,
 }
 
 #[derive(PartialEq, Clone, Copy)]
@@ -197,14 +234,8 @@ enum ProcessingState {
     Dispensing,
 }
 
-impl Default for State {
-    fn default() -> Self {
-        State::new()
-    }
-}
-
 impl State {
-    fn new() -> Self {
+    fn new(prices: std::collections::HashMap<Selection, i32>) -> Self {
         Self {
             current_selection: Selection {
                 letter: 'Z',
@@ -213,6 +244,7 @@ impl State {
             processing_state: ProcessingState::Idle,
             qr_code_finished: false,
             ctx: None,
+            prices: prices,
         }
     }
 }
@@ -222,8 +254,8 @@ struct App {
 }
 
 impl App {
-    pub fn new (cc: &eframe::CreationContext) -> Self {
-        let state = Arc::new(Mutex::new(State::default()));
+    pub fn new (cc: &eframe::CreationContext, prices: std::collections::HashMap<Selection, i32>) -> Self {
+        let state = Arc::new(Mutex::new(State::new(prices)));
         state.lock().unwrap().ctx = Some(cc.egui_ctx.clone());
         let state_clone = state.clone();
         std::thread::spawn(move || {

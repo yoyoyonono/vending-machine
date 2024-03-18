@@ -15,6 +15,9 @@
         pkgs = import nixpkgs { inherit system; };
       in with pkgs; rec {
         devShell = mkShell rec {
+          packages = [
+            imagemagick
+          ];
           buildInputs = [
             libxkbcommon
             libGL
