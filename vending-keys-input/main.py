@@ -1,4 +1,7 @@
 from pad4pi import rpi_gpio
+from pynput.keyboard import Key, Controller
+
+keyboard = Controller()
 
 KEYPAD = [
     ["1", "2", "3", "A"],
@@ -14,8 +17,11 @@ factory = rpi_gpio.KeypadFactory()
 
 keypad = factory.create_keypad(keypad=KEYPAD, row_pins=ROW_PINS, col_pins=COL_PINS)
 
-def printKey(key):
-    print(key)
+def printKey(key: str):
+    if key == '*' or key == '#':
+        keyboard.press(Key.enter)
+    else:
+        keyboard.press(key.lower())
 
 keypad.registerKeyPressHandler(printKey)
 

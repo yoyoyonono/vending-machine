@@ -14,6 +14,7 @@
             bashInteractive 
             python312
             python312Packages.pip
+            python312Packages.evdev
             ];
         };
       });
