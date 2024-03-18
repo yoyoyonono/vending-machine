@@ -18,3 +18,6 @@ def printKey(key):
     print(key)
 
 keypad.registerKeyPressHandler(printKey)
+
+while True:
+    pass
