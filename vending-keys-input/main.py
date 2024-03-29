@@ -19,6 +19,7 @@ factory = rpi_gpio.KeypadFactory()
 keypad = factory.create_keypad(keypad=KEYPAD, row_pins=ROW_PINS, col_pins=COL_PINS)
 
 def printKey(key: str):
+    print(repr(key))
     if key == '*' or key == '#':
         keyboard.press(Key.enter)
         sleep(0.1)

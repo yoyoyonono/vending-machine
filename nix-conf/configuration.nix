@@ -109,6 +109,9 @@
     git
     gh
     libraspberrypi
+    gnome.gnome-tweaks
+    gnomeExtensions.lan-ip-address 
+    sccache
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
