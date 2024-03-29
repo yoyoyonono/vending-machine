@@ -59,6 +59,14 @@
         user = "nixos";
       };
     };
+    inputClassSections = [
+      ''
+        Identifier "calibration"
+        MatchProdct "ADS7846 Touchscreen"
+        Option "Calibration" "3853 170 288 3801"
+        Option "SwapAxes" "1"
+      ''
+    ]
   };
   
 
