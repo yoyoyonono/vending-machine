@@ -15,7 +15,7 @@ fn main() -> Result<(), eframe::Error> {
     for price_line in prices_file.lines() {
         let mut split = price_line.split(" ");
         let letter = split.next().unwrap().chars().next().unwrap();
-        let number = split.next().unwrap().parse::<i32>().unwrap();
+        let number = split.next().unwrap().parse::<u8>().unwrap();
         let price = split.next().unwrap().parse::<i32>().unwrap();
         prices.insert(Selection{letter, number}, price);
     }
@@ -80,7 +80,7 @@ fn handle_states(state: Arc<Mutex<State>>) {
                 std::thread::sleep(std::time::Duration::from_secs(2));
                 state.lock().unwrap().processing_state = ProcessingState::Idle;
                 state.lock().unwrap().current_selection.letter = 'Z';
-                state.lock().unwrap().current_selection.number = 0;
+                state.lock().unwrap().current_selection.number = 255;
                 request_repaint(state.clone());
             },
             ProcessingState::GetPayment => {
@@ -138,15 +138,15 @@ fn display_selection(app: &mut App, ui: &mut egui::Ui) {
     let state = app.state.lock().unwrap();
     ui.heading(format!("Selected item : {}{}", 
         if state.current_selection.letter == 'Z' { ' ' } else { state.current_selection.letter }, 
-        if state.current_selection.number == 0 { ' ' } else { char::from_digit(state.current_selection.number.try_into().unwrap(), 10).unwrap() }));
-    if state.current_selection.letter != 'Z' && state.current_selection.number != 0 {
+        if state.current_selection.number == 255 { ' ' } else { char::from_digit(state.current_selection.number.try_into().unwrap(), 10).unwrap() }));
+    if state.current_selection.letter != 'Z' && state.current_selection.number != 255 {
         ui.heading(format!("Price : {}", state.prices.get(&state.current_selection).unwrap()));
     }
 }
 
 fn listen_for_enter(app: &mut App, ctx: &egui::Context) {
     let mut state = app.state.lock().unwrap();
-    if state.current_selection.letter == 'Z' || state.current_selection.number == 0 {
+    if state.current_selection.letter == 'Z' || state.current_selection.number == 255 {
         return;
     }
     if ctx.input(|i| i.key_pressed(Key::Enter)) {
@@ -158,24 +158,31 @@ fn listen_for_letters(app: &mut App, ctx: &egui::Context) {
     let mut state = app.state.lock().unwrap();
     if ctx.input(|i| i.key_pressed(Key::A)) {
         state.current_selection.letter = 'A';
-        state.current_selection.number = 0;
+        state.current_selection.number = 255;
     }
     if ctx.input(|i| i.key_pressed(Key::B)) {
         state.current_selection.letter = 'B';
-        state.current_selection.number = 0;
+        state.current_selection.number = 255;
     }
     if ctx.input(|i| i.key_pressed(Key::C)) {
         state.current_selection.letter = 'C';
-        state.current_selection.number = 0;
+        state.current_selection.number = 255;
     }
     if ctx.input(|i| i.key_pressed(Key::D)) {
         state.current_selection.letter = 'D';
-        state.current_selection.number = 0;
+        state.current_selection.number = 255;
+    }
+    if ctx.input(|i| i.key_pressed(Key::E)) {
+        state.current_selection.letter = '*';
+        state.current_selection.number = 255;
     }
 }
 
 fn listen_for_numbers(app: &mut App, ctx: &egui::Context) {
     let mut state = app.state.lock().unwrap();
+    if ctx.input(|i| i.key_pressed(Key::Num0)) {
+        state.current_selection.number = 0;
+    }
     if ctx.input(|i| i.key_pressed(Key::Num1)) {
         state.current_selection.number = 1;
     }
@@ -216,7 +223,7 @@ fn request_repaint(state: Arc<Mutex<State>>) {
 #[derive(PartialEq, Eq, Hash, Clone, Copy)]
 struct Selection {
     letter: char,
-    number: i32,
+    number: u8,
 }
 
 struct State {
@@ -239,7 +246,7 @@ impl State {
         Self {
             current_selection: Selection {
                 letter: 'Z',
-                number: 0,
+                number: 255,
             },
             processing_state: ProcessingState::Idle,
             qr_code_finished: false,
