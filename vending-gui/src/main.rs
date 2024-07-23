@@ -92,7 +92,16 @@ fn handle_states(state: Arc<Mutex<State>>) {
                 let prices = state.lock().unwrap().prices.clone();
                 let current_selection = state.lock().unwrap().current_selection.clone();
 
-                let qrcode = QRBuilder::new(format!("https://google.com/{}", prices.get(&current_selection).unwrap()))
+                println!("Generating qr code for item {}{}", current_selection.letter, current_selection.number);
+                println!("Price: Rs {}", prices.get(&current_selection).unwrap());
+
+                println!("Sending payment request to server...");
+
+                std::thread::sleep(std::time::Duration::from_secs(2));
+
+                let qrcode_data = format!("https://google.com/{}", prices.get(&current_selection).unwrap());
+
+                let qrcode = QRBuilder::new(qrcode_data)
                     .build()
                     .unwrap();
                 let _image = SvgBuilder::default()
@@ -117,6 +126,7 @@ fn handle_states(state: Arc<Mutex<State>>) {
 
                 // wait for payment
 
+                println!("Waiting for payment");
                 std::thread::sleep(std::time::Duration::from_secs(5));
 
                 
@@ -140,7 +150,7 @@ fn display_selection(app: &mut App, ui: &mut egui::Ui) {
         if state.current_selection.letter == 'Z' { ' ' } else { state.current_selection.letter }, 
         if state.current_selection.number == 255 { ' ' } else { char::from_digit(state.current_selection.number.try_into().unwrap(), 10).unwrap() }));
     if state.current_selection.letter != 'Z' && state.current_selection.number != 255 {
-        ui.heading(format!("Price : {}", state.prices.get(&state.current_selection).unwrap()));
+        ui.heading(format!("Price : Rs {}", state.prices.get(&state.current_selection).unwrap()));
     }
 }
 
