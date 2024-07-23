@@ -108,7 +108,7 @@ fn handle_states(state: Arc<Mutex<State>>) {
                     .shape(Shape::Square)
                     .to_file(&qrcode, "qr.svg");
 
-                let _ = Command::new("convert")
+                let _ = Command::new("magick")
                     .arg("-size")
                     .arg("200x200")
                     .arg("qr.svg")
