@@ -97,9 +97,15 @@ fn handle_states(state: Arc<Mutex<State>>) {
 
                 println!("Sending payment request to server...");
 
+                let _ = Command::new("python3")
+                    .arg("generate.py")
+                    .arg(prices.get(&current_selection).unwrap().to_string())
+                    .output()
+                    .expect("failed to generate qr code");
+
                 std::thread::sleep(std::time::Duration::from_secs(2));
 
-                let qrcode_data = format!("https://google.com/{}", prices.get(&current_selection).unwrap());
+                let qrcode_data = std::fs::read_to_string("qr.txt").unwrap();
 
                 let qrcode = QRBuilder::new(qrcode_data)
                     .build()
@@ -124,10 +130,13 @@ fn handle_states(state: Arc<Mutex<State>>) {
                 state.lock().unwrap().qr_code_finished = true;
                 request_repaint(state.clone());
 
-                // wait for payment
 
                 println!("Waiting for payment");
-                std::thread::sleep(std::time::Duration::from_secs(5));
+
+                let _ = Command::new("python3")
+                    .arg("wait.py")
+                    .output()
+                    .expect("failed to wait for payment");
 
                 
                 state.lock().unwrap().processing_state = ProcessingState::Dispensing;
@@ -140,6 +149,7 @@ fn handle_states(state: Arc<Mutex<State>>) {
 
 fn display_dispensing(app: &mut App, ui: &mut egui::Ui) {
     let state = app.state.lock().unwrap();
+    ui.heading("Payment successful!");
     ui.heading(format!("Dispensing {}{}...", 
         state.current_selection.letter, state.current_selection.number), );
 }

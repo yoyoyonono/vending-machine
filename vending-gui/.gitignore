@@ -3,3 +3,7 @@ target/
 qr.svg
 qr.png
 prices.txt
+key.txt
+qr.txt
+url.txt
+.venv

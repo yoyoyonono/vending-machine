@@ -17,6 +17,9 @@
         devShell = mkShell rec {
           packages = [
             imagemagick
+            python312
+            python312Packages.websockets
+            python312Packages.requests
           ];
           buildInputs = [
             libxkbcommon
