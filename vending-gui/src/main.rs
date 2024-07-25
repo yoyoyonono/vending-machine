@@ -17,7 +17,8 @@ fn main() -> Result<(), eframe::Error> {
         let letter = split.next().unwrap().chars().next().unwrap();
         let number = split.next().unwrap().parse::<u8>().unwrap();
         let price = split.next().unwrap().parse::<i32>().unwrap();
-        prices.insert(Selection{letter, number}, price);
+        let name = split.next().unwrap();
+        prices.insert(Selection{letter, number}, (price, name.to_string()));
     }
 
     let options = eframe::NativeOptions {
@@ -75,14 +76,6 @@ fn handle_states(state: Arc<Mutex<State>>) {
     loop {
         let current_state = state.lock().unwrap().processing_state;
         match current_state {
-            ProcessingState::Dispensing => {
-                request_repaint(state.clone());
-                std::thread::sleep(std::time::Duration::from_secs(2));
-                state.lock().unwrap().processing_state = ProcessingState::Idle;
-                state.lock().unwrap().current_selection.letter = 'Z';
-                state.lock().unwrap().current_selection.number = 255;
-                request_repaint(state.clone());
-            },
             ProcessingState::GetPayment => {
 
                 // generate qr code here
@@ -93,13 +86,13 @@ fn handle_states(state: Arc<Mutex<State>>) {
                 let current_selection = state.lock().unwrap().current_selection.clone();
 
                 println!("Generating qr code for item {}{}", current_selection.letter, current_selection.number);
-                println!("Price: Rs {}", prices.get(&current_selection).unwrap());
+                println!("Price: Rs {}", prices.get(&current_selection).unwrap().0);
 
                 println!("Sending payment request to server...");
 
                 let _ = Command::new("python3")
                     .arg("generate.py")
-                    .arg(prices.get(&current_selection).unwrap().to_string())
+                    .arg(prices.get(&current_selection).unwrap().0.to_string())
                     .output()
                     .expect("failed to generate qr code");
 
@@ -122,8 +115,6 @@ fn handle_states(state: Arc<Mutex<State>>) {
                     .output()
                     .expect("failed to execute process");
 
-//                println!("{:?}", convert_output);
-
                 state.clone().lock().unwrap().ctx.clone().unwrap().forget_all_images();
 
                 std::thread::sleep(std::time::Duration::from_millis(500));
@@ -141,7 +132,17 @@ fn handle_states(state: Arc<Mutex<State>>) {
                 
                 state.lock().unwrap().processing_state = ProcessingState::Dispensing;
                 state.lock().unwrap().qr_code_finished = false;
-            }
+            },
+            ProcessingState::Dispensing => { request_repaint(state.clone());
+                let mut port = serialport::new("/dev/ttyUSB0", 115200).open().expect("Failed to open serial port");
+                std::thread::sleep(std::time::Duration::from_secs(2));
+                port.write("1".as_bytes()).expect("failed to write to serial port");
+                std::thread::sleep(std::time::Duration::from_secs(5));
+                state.lock().unwrap().processing_state = ProcessingState::Idle;
+                state.lock().unwrap().current_selection.letter = 'Z';
+                state.lock().unwrap().current_selection.number = 255;
+                request_repaint(state.clone());
+            },
             _ => (),
         }
     }
@@ -160,7 +161,8 @@ fn display_selection(app: &mut App, ui: &mut egui::Ui) {
         if state.current_selection.letter == 'Z' { ' ' } else { state.current_selection.letter }, 
         if state.current_selection.number == 255 { ' ' } else { char::from_digit(state.current_selection.number.try_into().unwrap(), 10).unwrap() }));
     if state.current_selection.letter != 'Z' && state.current_selection.number != 255 {
-        ui.heading(format!("Price : Rs {}", state.prices.get(&state.current_selection).unwrap()));
+        ui.heading(format!("Item : {}", state.prices.get(&state.current_selection).unwrap().1));
+        ui.heading(format!("Price : Rs {}", state.prices.get(&state.current_selection).unwrap().0));
     }
 }
 
@@ -251,7 +253,7 @@ struct State {
     processing_state: ProcessingState,
     ctx: Option<egui::Context>,
     qr_code_finished: bool,
-    prices: std::collections::HashMap<Selection, i32>,
+    prices: std::collections::HashMap<Selection, (i32, String)>,
 }
 
 #[derive(PartialEq, Clone, Copy)]
@@ -262,7 +264,7 @@ enum ProcessingState {
 }
 
 impl State {
-    fn new(prices: std::collections::HashMap<Selection, i32>) -> Self {
+    fn new(prices: std::collections::HashMap<Selection, (i32, String)>) -> Self {
         Self {
             current_selection: Selection {
                 letter: 'Z',
@@ -281,7 +283,7 @@ struct App {
 }
 
 impl App {
-    pub fn new (cc: &eframe::CreationContext, prices: std::collections::HashMap<Selection, i32>) -> Self {
+    pub fn new (cc: &eframe::CreationContext, prices: std::collections::HashMap<Selection, (i32, String)>) -> Self {
         let state = Arc::new(Mutex::new(State::new(prices)));
         state.lock().unwrap().ctx = Some(cc.egui_ctx.clone());
         let state_clone = state.clone();

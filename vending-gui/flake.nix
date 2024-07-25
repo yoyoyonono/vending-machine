@@ -33,6 +33,10 @@
             xorg.libXrandr
             xorg.libXi
             xorg.libX11
+            systemd
+          ];
+          nativeBuildInputs = [
+            pkg-config
           ];
           LD_LIBRARY_PATH = "${lib.makeLibraryPath buildInputs}";
         };
