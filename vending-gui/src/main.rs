@@ -1,5 +1,5 @@
 use eframe::egui;
-use egui::{Key, Style, Visuals};
+use egui::{Key, Style, TextureOptions, Visuals};
 use std::process::Command;
 use std::sync::{Arc, Mutex};
 use fast_qr::convert::{svg::SvgBuilder, Builder, Shape};
@@ -61,7 +61,7 @@ impl eframe::App for App {
                     if !self.state.lock().unwrap().qr_code_finished {
                         ui.heading("Processing...");
                     } else {
-                        ui.add(egui::Image::new("file://./qr.png"));
+                        ui.add(egui::Image::new("file://./qr.png").texture_options(TextureOptions::NEAREST));
                     }
                 },
                 ProcessingState::Dispensing => {
@@ -109,7 +109,7 @@ fn handle_states(state: Arc<Mutex<State>>) {
 
                 let _ = Command::new("magick")
                     .arg("-size")
-                    .arg("200x200")
+                    .arg("1200x1200")
                     .arg("qr.svg")
                     .arg("qr.png")
                     .output()
